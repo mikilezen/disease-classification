@@ -1,16 +1,24 @@
-import os
 import string
 from pathlib import Path
 
 import joblib
 import nltk
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 from pydantic import BaseModel
 
 app = FastAPI()
+
+# Always return the real error as JSON (so your client can show it)
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"error": str(exc), "path": request.url.path},
+    )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SRC_DIR = BASE_DIR / "src"
@@ -39,10 +47,8 @@ encoder = joblib.load(SRC_DIR / "label_encoder.joblib")
 lemmatizer = WordNetLemmatizer()
 stop_words = set(stopwords.words("english"))
 
-
 class PredictionRequest(BaseModel):
     text: str
-
 
 def preprocess_text(text: str) -> str:
     text = text.lower()
@@ -51,31 +57,18 @@ def preprocess_text(text: str) -> str:
     processed = [lemmatizer.lemmatize(w) for w in tokens if w not in stop_words]
     return " ".join(processed)
 
-
 @app.get("/")
 def root():
     return {"status": "ok"}
-
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
-
 @app.post("/predict")
 def predict(req: PredictionRequest):
-    try:
-        processed = preprocess_text(req.text)
-        vec = vectorizer.transform([processed])
-        pred = model.predict(vec)
-        label = encoder.inverse_transform(pred)
-        return {"prediction": label[0]}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-from fastapi.responses import JSONResponse
-from fastapi.requests import Request
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(status_code=500, content={"error": str(exc), "path": str(request.url.path)})
-    
+    processed = preprocess_text(req.text)
+    vec = vectorizer.transform([processed])
+    pred = model.predict(vec)
+    label = encoder.inverse_transform(pred)
+    return {"prediction": label[0]}
