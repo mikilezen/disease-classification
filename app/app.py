@@ -6,7 +6,15 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
+import nltk
+import os
 
+nltk_data_path = os.path.join(os.getcwd(), "nltk_data")
+nltk.download('punkt', download_dir=nltk_data_path)
+nltk.download('stopwords', download_dir=nltk_data_path)
+nltk.download('wordnet', download_dir=nltk_data_path)
+
+nltk.data.path.append(nltk_data_path)
 app = FastAPI()
 
 model = joblib.load("./src/logistic_regression_model.joblib")
@@ -43,3 +51,8 @@ def predict(req: PredictionRequest):
     pred = model.predict(vec)
     label = encoder.inverse_transform(pred)
     return {"prediction": label[0]}
+
+import uvicorn
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
