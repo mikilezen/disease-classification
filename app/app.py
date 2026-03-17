@@ -30,6 +30,7 @@ if str(NLTK_DIR) not in nltk.data.path:
 
 _REQUIRED_NLTK = {
     "punkt": "tokenizers/punkt",
+    "punkt_tab": "tokenizers/punkt_tab",
     "stopwords": "corpora/stopwords",
     "wordnet": "corpora/wordnet",
 }
