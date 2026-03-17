@@ -72,3 +72,10 @@ def predict(req: PredictionRequest):
         return {"prediction": label[0]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(status_code=500, content={"error": str(exc), "path": str(request.url.path)})
+    
