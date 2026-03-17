@@ -2,19 +2,32 @@ import joblib
 from fastapi import FastAPI
 from pydantic import BaseModel
 import string
+import os
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
-import nltk
-import os
 
 nltk_data_path = os.path.join(os.getcwd(), "nltk_data")
-nltk.download('punkt', download_dir=nltk_data_path)
-nltk.download('stopwords', download_dir=nltk_data_path)
-nltk.download('wordnet', download_dir=nltk_data_path)
+os.makedirs(nltk_data_path, exist_ok=True)
 
-nltk.data.path.append(nltk_data_path)
+# Ensure NLTK looks in our app-local directory first
+if nltk_data_path not in nltk.data.path:
+    nltk.data.path.insert(0, nltk_data_path)
+
+# Download required NLTK resources only if they are missing
+_REQUIRED_NLTK = {
+    "punkt": "tokenizers/punkt",
+    "stopwords": "corpora/stopwords",
+    "wordnet": "corpora/wordnet",
+}
+
+for pkg, resource_path in _REQUIRED_NLTK.items():
+    try:
+        nltk.data.find(resource_path)
+    except LookupError:
+        nltk.download(pkg, download_dir=nltk_data_path)
+
 app = FastAPI()
 
 model = joblib.load("./src/logistic_regression_model.joblib")
@@ -28,7 +41,7 @@ class PredictionRequest(BaseModel):
     text: str
 
 
-def preprocess_text(text):
+def preprocess_text(text: str) -> str:
     text = text.lower()
     text = text.translate(str.maketrans("", "", string.punctuation))
     tokens = word_tokenize(text)
@@ -39,10 +52,13 @@ def preprocess_text(text):
     ]
     return " ".join(processed)
 
+@app.get("/")
+def root():
+    return {"status": "ok"}
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
 
 @app.post("/predict")
 def predict(req: PredictionRequest):
