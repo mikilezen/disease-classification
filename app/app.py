@@ -12,7 +12,6 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-# Always return the real error as JSON (so your client can show it)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
