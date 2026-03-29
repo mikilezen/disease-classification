@@ -44,6 +44,7 @@ model = joblib.load(SRC_DIR / "logistic_regression_model.joblib")
 vectorizer = joblib.load(SRC_DIR / "tfidf_vectorizer.joblib")
 encoder = joblib.load(SRC_DIR / "label_encoder.joblib")
 
+
 lemmatizer = WordNetLemmatizer()
 stop_words = set(stopwords.words("english"))
 
