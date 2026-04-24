@@ -12,7 +12,6 @@ def test_prediction():
         response = requests.post(url, json={"text": text})
         print("\nInput:", text)
         print("Status:", response.status_code)
-        res = response.text
         body = response.json()
         print("Response:", body.get("prediction", "No prediction found"))
 
